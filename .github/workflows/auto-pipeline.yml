@@ -1,0 +1,30 @@
+name: 💰 AI Auto Money Pipeline
+on:
+  schedule:
+    - cron: '0 0,3,6,9,12,15,18,21 * * *'
+  workflow_dispatch:
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - name: Run AI Pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
+          SITE_NAME: "我的智能网站"
+          SITE_URL: "https://ai-smart-content.vercel.app"
+          ADSENSE_PUBLISHER_ID: ${{ secrets.ADSENSE_PUBLISHER_ID }}
+          ADSENSE_ENABLED: "true"
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          DEPLOY_PROVIDER: "vercel"
+        run: npm run pipeline
+      - run: |
+          git config user.name "AI Bot"
+          git config user.email "bot@ai-money.local"
+          git add data/ sites/ 2>/dev/null || true
+          git diff --staged --quiet || (git commit -m "🤖 Auto: $(date -u '+%Y-%m-%d %H:%M UTC')" && git push)
